@@ -1,0 +1,660 @@
+---
+title: <Image>
+description: `next/image` 컴포넌트를 사용하여 Next.js 애플리케이션에서 이미지를 최적화하세요.
+---
+
+<details>
+  <summary>예시</summary>
+
+- [Image 컴포넌트](https://github.com/vercel/next.js/tree/canary/examples/image-component)
+
+</details>
+
+<PagesOnly>
+
+> **참고**: > **참고**: 컴포넌트의 이름이 변경되었으므로 Next.js 13 이전의 버전을 사용하신다면 [next/legacy/image](/docs/pages/api-reference/components/image-legacy) 문서를 보는 것이 좋습니다.
+
+</PagesOnly>
+
+이 API 레퍼런스는 Image 컴포넌트에서 사용할 수 있는 [props](#props)와 [구성 옵션](#구성-옵션)의 사용법을 이해하는 데 도움이 됩니다. 기능 및 사용법은 이미지 [컴포넌트 페이지](/docs/app/building-your-application/optimizing/images)를 참조하세요.
+
+```jsx filename="app/page.js"
+import Image from 'next/image'
+
+export default function Page() {
+  return (
+    <Image
+      src="/profile.png"
+      width={500}
+      height={500}
+      alt="Picture of the author"
+    />
+  )
+}
+```
+
+## Props
+
+Image 컴포넌트에 사용할 수 있는 props에 대한 요약입니다.
+
+<div style={{ overflowX: 'auto', width: '100%' }}>
+
+| Prop                                      | 예시                                 | 타입            | 필수? |
+| ----------------------------------------- | ------------------------------------ | --------------- | ----- |
+| [`src`](#src)                             | `src="/profile.png"`                 | String          | 필수  |
+| [`width`](#width)                         | `width={500}`                        | Integer (px)    | 필수  |
+| [`height`](#height)                       | `height={500}`                       | Integer (px)    | 필수  |
+| [`alt`](#alt)                             | `alt="Picture of the author"`        | String          | 필수  |
+| [`loader`](#loader)                       | `loader={imageLoader}`               | Function        | -     |
+| [`fill`](#fill)                           | `fill={true}`                        | Boolean         | -     |
+| [`sizes`](#sizes)                         | `sizes="(max-width: 768px) 100vw"`   | String          | -     |
+| [`quality`](#quality)                     | `quality={80}`                       | Integer (1-100) | -     |
+| [`priority`](#priority)                   | `priority={true}`                    | Boolean         | -     |
+| [`placeholder`](#placeholder)             | `placeholder="blur"`                 | String          | -     |
+| [`style`](#style)                         | `style={{objectFit: "contain"}}`     | Object          | -     |
+| [`onLoadingComplete`](#onloadingcomplete) | `onLoadingComplete={img => done())}` | Function        | -     |
+| [`onLoad`](#onload)                       | `onLoad={event => done())}`          | Function        | -     |
+| [`onError`](#onerror)                     | `onError(event => fail()}`           | Function        | -     |
+| [`loading`](#loading)                     | `loading="lazy"`                     | String          | -     |
+| [`blurDataURL`](#blurdataurl)             | `blurDataURL="data:image/jpeg..."`   | String          | -     |
+
+</div>
+
+## 필수 Props
+
+Image 컴포넌트는 `src`, `width`, `height`, `alt` 속성이 필요합니다.
+
+```jsx filename="app/page.js"
+import Image from 'next/image'
+
+export default function Page() {
+  return (
+    <div>
+      <Image
+        src="/profile.png"
+        width={500}
+        height={500}
+        alt="Picture of the author"
+      />
+    </div>
+  )
+}
+```
+
+### `src`
+
+다음 중 하나여야 합니다.
+
+- [정적으로 가져온](/docs/app/building-your-application/optimizing/images#local-images) 이미지 파일
+- 경로 문자열 (절대 경로인 외부 URL이거나 [loader](#loader) 속성에 따라 내부 경로일 수 있습니다.)
+
+외부 URL을 사용하는 경우 next.config.js의 [remotePatterns](#remotepatterns)에 추가해야 합니다.
+
+### `width`
+
+`width` 프로퍼티는 렌더링 되는 너비를 픽셀 단위로 나타내므로 이미지가 표시되는 크기에 영향을 줍니다.
+
+[정적으로 가져온 이미지](/docs/app/building-your-application/optimizing/images#local-images)나 [`fill` 프로퍼티](#fill)가 있는 이미지를 제외하고는, 필수입니다.
+
+### `height`
+
+`height` 프로퍼티는 렌더링 되는 높이를 픽셀 단위로 나타내므로 이미지가 표시되는 크기에 영향을 줍니다.
+
+[정적으로 가져온 이미지](/docs/app/building-your-application/optimizing/images#local-images)나 [`fill` 프로퍼티](#fill)가 있는 이미지를 제외하고는, 필수입니다.
+
+### `alt`
+
+`alt` 프로퍼티는 스크린 리더와 검색 엔진에 이미지를 설명하는 데 사용됩니다. 또한 이미지가 비활성화되었거나 이미지를 로드하는 동안 오류가 발생한 경우에 대체하여 보여줄 텍스트이기도 합니다.
+
+[페이지의 의미를 변경하지 않고](https://html.spec.whatwg.org/multipage/images.html#general-guidelines) 이미지를 대체할 수 있는 텍스트를 포함해야 합니다. 이미지를 보완하기 위한 것이 아니어야 하며 이미지 위나 아래 설명에서 이미 제공한 정보를 반복해서는 안 됩니다.
+
+이미지가 단순한 장식용이거나 사용자를 위한 것이 아닌 경우 `alt` 프로퍼티는 빈 문자열(`alt=""`)이어야 합니다.
+
+[자세히 알아보기](https://html.spec.whatwg.org/multipage/images.html#alt)
+
+## 선택 Props
+
+`<Image />` 컴포넌트는 필수 속성 외에도 여러 가지 추가 속성을 사용할 수 있습니다. 이 섹션에서는 Image 컴포넌트에서 일반적으로 사용되는 속성에 관해 설명합니다. 자주 사용되지 않는 속성에 대한 자세한 내용은 [고급 Props](#고급-props) 섹션에서 확인할 수 있습니다.
+
+### `loader`
+
+이미지 URL을 확인하는 데 사용되는 사용자 정의 함수입니다.
+
+`loader`는 다음 매개변수가 주어지면 이미지의 URL 문자열을 반환하는 함수입니다.
+
+- [`src`](#src)
+- [`width`](#width)
+- [`quality`](#quality)
+
+다음은 사용자 정의 로더를 사용하는 예제입니다.
+
+```js
+'use client'
+
+import Image from 'next/image'
+
+const imageLoader = ({ src, width, quality }) => {
+  return `https://example.com/${src}?w=${width}&q=${quality || 75}`
+}
+
+export default function Page() {
+  return (
+    <Image
+      loader={imageLoader}
+      src="me.png"
+      alt="Picture of the author"
+      width={500}
+      height={500}
+    />
+  )
+}
+```
+
+<AppOnly>
+
+> **참고**: 함수를 전달받는 `loader`와 같은 props를 사용하려면 제공된 함수를 직렬화하기 위해 [클라이언트 컴포넌트](/docs/getting-started/react-essentials#client-components)를 사용해야 합니다.
+
+</AppOnly>
+
+또는 `next.config.js`의 [loaderFile](#loaderfile) 구성을 사용하여 프로퍼티를 전달하지 않고도 애플리케이션에서 `next/image`의 모든 인스턴스를 구성할 수 있습니다.
+
+### `fill`
+
+```js
+fill={true} // {true} | {false}
+```
+
+[`width`](#width)와 [`height`](#height)를 설정하는 대신 이미지가 부모 요소를 채우도록 하는 논릿값입니다.
+
+부모 요소에는 반드시 `position: "relative"`, `position: "fixed"`, 또는 `position: "absolute"` 스타일을 지정해야 합니다.
+
+기본적으로 이미지 요소에는 `position: "absolute"` 스타일이 자동으로 지정됩니다.
+
+기본 이미지 맞춤 동작은 컨테이너에 맞게 이미지를 늘립니다. 컨테이너에 맞고 가로 세로 비율을 유지하도록 레터박스로 된 이미지에 대해 `object-fit: "contain"`을 지정할 수도 있습니다.
+
+또는 `object-fit: "cover"`를 사용하면 이미지는 전체 컨테이너를 채우고 가로세로 비율을 유지하기 위해 잘려집니다. 이 경우 올바르게 보이려면 `overflow: "hidden"` 스타일을 부모 요소에 지정해야 합니다.
+
+자세한 내용은 다음을 참조하세요.
+
+- [`position`](https://developer.mozilla.org/en-US/docs/Web/CSS/position)
+- [`object-fit`](https://developer.mozilla.org/en-US/docs/Web/CSS/object-fit)
+- [`object-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/object-position)
+
+### `sizes`
+
+다른 중단점에서 이미지가 얼마나 넓어질지에 대한 정보를 제공하는 문자열입니다. `sizes` 값은 [`fill`](#fill)을 사용하거나 반응형 크기를 갖도록 스타일을 지정한 이미지의 성능에 큰 영향을 미칩니다.
+
+`sizes` 프로퍼티는 이미지 성능과 관련된 두 가지 중요한 용도로 사용됩니다.
+
+- 첫째, `sizes` 값은 브라우저가 `next/image`의 자동 생성된 소스 세트에서 다운로드할 이미지의 크기를 결정하는 데 사용됩니다. 브라우저는 이미지를 선택할 때 아직 페이지에 있는 이미지의 크기를 알지 못하므로 뷰포트와 같은 크기이거나 더 큰 이미지를 선택합니다. `sizes` 프로퍼티를 통해 브라우저에 이미지가 실제 전체 화면보다 작을 것이라고 알릴 수 있습니다. `fill` 프로퍼티가 있는 이미지에 `sizes` 값을 지정하지 않으면 기본값인 `100vw` (전체 화면 너비)가 사용됩니다.
+
+- 둘째, `sizes` 프로퍼티는 `next/image`가 이미지 소스 집합을 자동으로 생성하는 방법을 구성합니다. `sizes` 값이 없으면 고정된 크기를 갖는 이미지에 적합한 작은 소스 세트가 생성됩니다. `sizes`가 정의되어 있으면 반응형 이미지에 적합한 큰 소스 세트가 생성됩니다. `sizes` 프로퍼티에 뷰포트 너비의 백분율을 나타내는 `50vw`와 같은 크기가 포함된 경우, 소스 세트는 너무 작아서 필요하지 않은 값을 포함하지 않도록 잘립니다.
+
+예를 들어 스타일링으로 인해 이미지가 모바일 디바이스에서는 전체 너비, 태블릿에서는 2열 레이아웃, 데스크탑 디스플레이에서는 3열 레이아웃으로 표시되는 것을 알고 있다면 다음과 같은 `sizes` 프로퍼티를 포함해야 합니다.
+
+```jsx
+import Image from 'next/image'
+
+export default function Page() {
+  return (
+    <div className="grid-element">
+      <Image
+        fill
+        src="/example.png"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      />
+    </div>
+  )
+}
+```
+
+이 예제에서 `sizes`는 성능 지표에 큰 영향을 미칠 수 있습니다. `33vw` 크기가 없다면 서버에서 선택한 이미지의 너비가 필요한 것보다 3배 더 커집니다. 파일 크기는 너비의 제곱에 비례하므로 `sizes`가 없으면 사용자는 필요한 것 보다 9배 큰 이미지를 로드하게 됩니다.
+
+`srcset`과 `sizes`에 대해 자세히 알아보세요.
+
+- [web.dev](https://web.dev/learn/design/responsive-images/#sizes)
+- [mdn](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#attr-sizes)
+
+### `quality`
+
+```js
+quality={75} // {number 1-100}
+```
+
+최적화된 이미지의 품질로 `1` 에서 `100` 사이의 정수이며, `100`은 최상의 품질로 파일 크기가 가장 큽니다. 기본값은 `75`입니다.
+
+### `priority`
+
+```js
+priority={false} // {false} | {true}
+```
+
+값이 참이라면 이미지의 우선순위가 높은 것으로 간주되어 미리 로드됩니다. `priority`를 사용하는 이미지에 대해서는 [지연 로딩](https://web.dev/preload-responsive-images/)이 자동으로 비활성화됩니다.
+
+[Largest Contentful Paint (LCP)](https://nextjs.org/learn/seo/web-performance/lcp) 요소로 감지된 모든 이미지에는 `priority` 프로퍼티를 사용해야 합니다. 뷰포트 크기에 따라 이미지가 LCP 요소가 될 수 있으므로 여러 개의 우선순위 이미지를 사용하는 것이 적절할 수 있습니다.
+
+이미지가 접힌 부분 위에 보일 때만 사용해야 합니다. 기본값은 `false`입니다.
+
+### `placeholder`
+
+```js
+placeholder = 'empty' // {empty} | {blur}
+```
+
+이미지가 로드되는 동안 사용할 플레이스홀더입니다. `blur` 또는 `empty`을 값으로 사용할 수 있습니다. 기본값은 `empty`입니다.
+
+A placeholder to use while the image is loading. Possible values are `blur` or `empty`. Defaults to `empty`.
+
+`blur`인 경우 [`blurDataURL`](#blurdataurl) 프로퍼티는 플레이스홀더로 사용됩니다. `src`가 [정적으로 가져온](/docs/app/building-your-application/optimizing/images#local-images) 이미지이고 `.jpg`, `.png`, `.webp`, 또는 `.avif`인 경우 `blurDataURL`은 자동으로 채워집니다.
+
+동적 이미지의 경우 [`blurDataURL`](#blurdataurl) 프로퍼티를 제공해야 합니다. [Plaiceholder](https://github.com/joe-bell/plaiceholder) 와 같은 솔루션은 `base64` 생성에 도움이 될 수 있습니다.
+
+`empty`인 경우 이미지가 로드되는 동안 플레이스홀더가 표시되지 않고 빈 공간만 표시됩니다.
+
+사용해 보세요.
+
+- [`blur` 플레이스홀더 데모](https://image-component.nextjs.gallery/placeholder)
+- [`blurDataURL` prop으로 쉬머 효과를 적용한 데모](https://image-component.nextjs.gallery/shimmer)
+- [`blurDataURL` prop으로 색상 효과를 적용한 데모](https://image-component.nextjs.gallery/color)
+
+## 고급 Props
+
+경우에 따라 고급 사용이 필요할 수 있습니다. `<Image />` 컴포넌트는 선택적으로 다음과 같은 고급 속성을 사용할 수 있습니다.
+
+### `style`
+
+기본 이미지 요소에 CSS 스타일을 전달할 수 있습니다.
+
+```jsx filename="components/ProfileImage.js"
+const imageStyle = {
+  borderRadius: '50%',
+  border: '1px solid #fff',
+}
+
+export default function ProfileImage() {
+  return <Image src="..." style={imageStyle} />
+}
+```
+
+필수적인 width와 height props은 스타일링과 상호 작용할 수 있다는 점을 기억해야 합니다. 스타일링을 사용하여 이미지의 너비를 수정하는 경우 고유한 종횡비를 유지하기 위해 높이도 `auto`로 스타일링 해야 하며, 그렇지 않으면 이미지가 왜곡될 수 있습니다.
+
+### `onLoadingComplete`
+
+```jsx
+'use client'
+
+<Image onLoadingComplete={(img) => console.log(img.naturalWidth)} />
+```
+
+이미지가 완전히 로드되고 플레이스홀더가 제거되면 호출되는 콜백 함수입니다.
+
+콜백 함수는 하나의 인수를 사용하여 호출되며, 인수는 `<img>` 요소에 대한 참조입니다.
+
+<AppOnly>
+
+> **참고**: 함수를 전달받는 `onLoadingComplete` 같은 props를 사용하려면 제공된 함수를 직렬화하기 위해 [클라이언트 컴포넌트](/docs/getting-started/react-essentials#client-components)를 사용해야 합니다.
+
+</AppOnly>
+
+### `onLoad`
+
+```jsx
+<Image onLoad={(e) => console.log(e.target.naturalWidth)} />
+```
+
+이미지를 로드할 때 호출되는 콜백 함수입니다.
+
+이미지 플레이스홀더가 제거되고 이미지가 완전히 디코딩 되기 전에 로드 이벤트가 발생할 수 있습니다. 이미지가 완전히 로드될 때까지 기다리려면 [`onLoadingComplete`](#onloadingcomplete)를 사용하세요.
+
+<AppOnly>
+
+> **참고**: 함수를 전달받는 `onLoad` 같은 props를 사용하려면 제공된 함수를 직렬화하기 위해 [클라이언트 컴포넌트](/docs/getting-started/react-essentials#client-components)를 사용해야 합니다.
+
+</AppOnly>
+
+### `onError`
+
+```jsx
+<Image onError={(e) => console.error(e.target.id)} />
+```
+
+이미지 로드에 실패하는 경우 호출되는 콜백 함수입니다.
+
+<AppOnly>
+
+> **참고**: 함수를 전달받는 `onError` 같은 props를 사용하려면 제공된 함수를 직렬화하기 위해 [클라이언트 컴포넌트](/docs/getting-started/react-essentials#client-components)를 사용해야 합니다.
+
+</AppOnly>
+
+### `loading`
+
+> **추천**: 이 프로퍼티는 고급 사용 사례에만 적용됩니다. 이미지를 `eager` 로드하도록 전환하면 일반적으로 **성능이 저하**됩니다. 대신 이미지를 미리 로드하는 [`priority`](#priority) 프로퍼티를 사용하는 것이 좋습니다.
+
+```js
+loading = 'lazy' // {lazy} | {eager}
+```
+
+이미지의 로딩 동작입니다. 기본값은 `lazy`입니다.
+
+`lazy`를 선택하면 이미지가 뷰포트에서 계산된 거리에 도달할 때까지 이미지 로드를 지연합니다.
+
+`eager`면 이미지를 즉시 로드합니다.
+
+[`loading` 속성](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#attr-loading)에 대해 자세히 알아보세요.
+
+### `blurDataURL`
+
+`src` 이미지가 성공적으로 로드되기 전에 플레이스홀더 이미지로 사용할 [데이터 URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)입니다. [`placeholder="blur"`](#placeholder)와 함께 사용하는 경우에만 적용됩니다.
+
+base64로 인코딩된 이미지여야 합니다. 이미지가 확대되고 흐릿해지므로 10px 이하의 매우 작은 이미지를 사용하는 것이 좋습니다. 큰 이미지를 플레이스홀더로 포함하면 애플리케이션 성능이 저하될 수 있습니다.
+
+사용해 보세요.
+
+- [`blur` 플레이스홀더 데모](https://image-component.nextjs.gallery/placeholder)
+- [`blurDataURL` prop으로 쉬머 효과를 적용한 데모](https://image-component.nextjs.gallery/shimmer)
+- [`blurDataURL` prop으로 색상 효과를 적용한 데모](https://image-component.nextjs.gallery/color)
+- 이미지와 일치하는 [단색 데이터 URL을 생성](https://png-pixel.com)할 수도 있습니다.
+
+### `unoptimized`
+
+```js
+unoptimized = {false} // {false} | {true}
+```
+
+값이 참인 경우, 소스 이미지의 화질, 크기, 포맷을 변경하지 않고 있는 그대로 제공됩니다. 기본값은 `false`입니다.
+
+```js
+import Image from 'next/image'
+
+const UnoptimizedImage = (props) => {
+  return <Image {...props} unoptimized />
+}
+```
+
+Next.js 12.3.0부터 이 prop은 다음과 같은 설정으로 `next.config.js`를 업데이트하여 모든 이미지에 할당할 수 있습니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    unoptimized: true,
+  },
+}
+```
+
+### 다른 Props
+
+`<Image />` 컴포넌트의 다른 프로퍼티는 아래 속성을 제외하고 기본 요소인 `img` 요소로 전달됩니다.
+
+- `srcSet`. 대신 [Device Sizes](#devicesizes)를 사용합니다.
+- `decoding`. 항상 `"async"`입니다.
+
+## 구성 옵션
+
+props 외에도 `next.config.js`에서 이미지 컴포넌트를 구성할 수 있습니다. 다음 옵션을 활용할 수 있습니다.
+
+### `remotePatterns`
+
+악의적인 사용자로부터 애플리케이션을 보호하기 위해서 외부 이미지를 사용할 때는 별도 구성이 필요합니다. 이렇게 허용된 외부 이미지만 Next.js 이미지 최적화 API를 통해 제공될 수 있습니다. 이러한 외부 이미지는 아래와 같이 `next.config.js` 파일에서 `remotePatterns` 프로퍼티를 사용하여 구성할 수 있습니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+        port: '',
+        pathname: '/account123/**',
+      },
+    ],
+  },
+}
+```
+
+> **참고**: 위의 예에서는 `next/image`의 `src` 프로퍼티는 `https://example.com/account123/`으로 시작해야 합니다. 다른 프로토콜, 호스트 이름, 포트 또는 일치하지 않는 경로가 있으면 400 Bad Request로 응답합니다.
+
+다음은 `next.config.js` 파일에 있는 `remotePatterns` 프로퍼티의 또 다른 예입니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.example.com',
+      },
+    ],
+  },
+}
+```
+
+> **참고**: 위의 예에서는 `next/image`의 `src` 프로퍼티는 `https://img1.example.com` 또는 `https://me.avatar.example.com` 또는 하위 도메인 수와 관계 없이 시작해야 합니다. 다른 프토콜이나 일치하지 않는 호스트 이름은 400 Bad Request로 응답합니다.
+
+와일드카드 패턴은 `pathname`과 `hostname` 모두에 사용될 수 있으며 구문은 다음과 같습니다.
+
+- `*`는 단일 경로 세그먼트 또는 하위 도메인을 일치시킵니다.
+- `**`는 끝에 있는 경로 세그먼트 또는 처음에 있는 하위 도메인을 원하는 수만큼 일치시킵니다.
+
+`**` 구문은 패턴 중간에서 작동하지 않습니다.
+
+### `domains`
+
+> **경고**: 악의적인 사용자로부터 애플리케이션을 보호하려면 `domains` 대신 엄격한 [`remotePatterns`](#remotepatterns)을 구성하는 것이 좋습니다. 도메인에서 제공되는 모든 콘텐츠를 소유한 경우에만 `domains`를 사용하세요.
+
+[`remotePatterns`](#remotepatterns)과 유사하게 `domains` 구성을 사용하여 외부 이미지에 허용되는 호스트 이름 목록을 제공할 수 있습니다.
+
+그러나 `domains` 구성은 와일드카드 패턴 일치를 지원하지 않으며 프로토콜, 포트 또는 경로명을 제한할 수 없습니다.
+
+다음은 `next.config.js` 파일에 있는 `domians` 프로퍼티의 예시입니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    domains: ['assets.acme.com'],
+  },
+}
+```
+
+### `loaderFile`
+
+Next.js에 내장된 이미지 최적화 API를 사용하는 대신 클라우드 제공업체를 사용하여 이미지를 최적화하려면 다음과 같이 `next.config.js`에서 `loaderFile`을 구성할 수 있습니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    loader: 'custom',
+    loaderFile: './my/image/loader.js',
+  },
+}
+```
+
+이 파일은 Next.js 애플리케이션의 루트를 기준으로 파일을 가리켜야 합니다. 예를 들어 파일은 문자열을 반환하는 기본 함수를 내보내야 합니다.
+
+```js
+export default function myImageLoader({ src, width, quality }) {
+  return `https://example.com/${src}?w=${width}&q=${quality || 75}`
+}
+```
+
+또는 [`loader` prop](#loader)을 사용하여 `next/image`의 각 인스턴스를 구성할 수 있습니다.
+
+예시
+
+- [사용자 정의 이미지 로더 구성](/docs/app/api-reference/next-config-js/images#example-loader-configuration)
+
+<AppOnly>
+
+> **참고**: 함수를 전달받는 이미지 로더 파일을 커스텀하는 경우 제공된 함수를 직렬화하기 위해 [클라이언트 컴포넌트](/docs/getting-started/react-essentials#client-components)를 사용해야 합니다.
+
+</AppOnly>
+
+## 고급 사례
+
+다음 구성은 고급 사용 사례를 위한 것으로 일반적으로는 필요하지 않습니다. 아래 속성을 구성하도록 선택하면 향후 업데이트에서 Next.js 기본값에 대한 모든 변경 사항을 재정의하게 됩니다.
+
+### `deviceSizes`
+
+사용자의 기기 너비를 알고 있는 경우 `next.config.js`의 `deviceSizes` 프로퍼티를 사용하여 기기 너비 중단점 목록을 지정할 수 있습니다. 이 너비는 `next/image` 컴포넌트가 `sizes` prop을 사용할 때 사용자 기기에 맞는 이미지가 표시되도록 하기 위해 사용됩니다.
+
+설정이 제공되지 않으면 아래 기본값이 사용됩니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+  },
+}
+```
+
+### `imageSizes`
+
+`next.config.js` 파일에서 `images.imageSizes` 프로퍼티를 사용하면 이미지 너비 목록을 지정할 수 있습니다. 너비는 [디바이스 크기](#devicesizes) 배열과 연결되어 이미지 [srcset](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/srcset)을 생성하는데 사용되는 전체 크기 배열을 형성합니다.
+
+이미지가 화면의 전체 너비보다 작다는 것을 나타내는 [`size`](#sizes) 속성을 제공하는 이미지에만 imageSizes가 사용되기 때문에 두 개의 별도 목록이 존재합니다. **따라서 imageSizes의 크기는 모두 deviceSizes의 가장 작은 크기보다 작아야 합니다.**
+
+구성을 제공하지 않으면 아래 기본 값이 사용됩니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+}
+```
+
+### `formats`
+
+기본 [이미지 최적화 API](#loader)는 요청 헤더의 `Accept`를 통해 브라우저에 지원되는 이미지 형식을 자동으로 감지합니다.
+
+`Accept` 헤드가 구성된 포맷 중 둘 이상과 일치하는 경우 첫 번째로 일치하는 항목이 사용됩니다. 따라서 배열 순서가 중요합니다. 일치하는 항목이 없거나 소스 이미지가 [애니메이션](#애니메이션-이미지)인 경우 최적화 API는 원본 이미지의 형식으로 폴백합니다.
+
+구성을 제공하지 않으면 아래의 기본 값이 사용됩니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    formats: ['image/webp'],
+  },
+}
+```
+
+다음 구성을 통해 AVIF 지원을 활성화할 수 있습니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
+}
+```
+
+> **참고**:
+>
+> - AVIF는 일반적으로 인코딩하는 데 20% 더 오래 걸리지만 WebP에 비해 20% 더 작게 압축됩니다. 즉, 이미지를 처음 요청할 때는 일반적으로 속도가 느리고 이후 캐시된 요청은 더 빨라집니다.
+> - Next.js 앞에 프록시/CDN을 사용하여 자체 호스팅 하는 경우 `Accept` 헤더를 전달하도록 프록시를 구성해야 합니다.
+
+## 캐싱 동작
+
+다음은 기본 [로더](#loader)의 캐싱 알고리즘에 대해 설명합니다. 다른 모든 로더에 대해서는 클라우드 제공업체의 문서를 참조하세요.
+
+이미지는 요청 시 동적으로 최적화되어 `<distDir>/cache/images` 디렉터리에 저장됩니다. 최적화된 이미지 파일은 만료에 도달할 때까지 후속 요청에 대해 제공됩니다. 캐시 되었지만, 만료된 파일과 일치하는 요청이 발생하면 만료된 이미지는 부실 이미지로 제공됩니다. 그런 다음 이미지가 백그라운드에서 다시 최적화(재검증)되고 새 만료일과 함께 캐시에 저장됩니다.
+
+이미지의 캐시 상태는 `x-nextjs-cache`응답 헤더의 값을 읽어서 확인할 수 있습니다. 가능한 값은 다음과 같습니다.
+
+- `MISS` - 경로가 캐시에 없습니다. (첫 번째 방문 시 최대 한 번만 발생)
+- `STALE` - 경로가 캐시에 있지만 재검증 시간을 초과하여 백그라운드에서 업데이트됩니다.
+- `HIT` - 경로가 캐시에 있고 재검증 시간을 초과하지 않았습니다.
+
+만료 (혹은 Max Age)는 [`minimumCacheTTL`](#minimumcachettl) 구성 또는 업스트림 이미지 `Cache-Control` 헤더 중 더 큰 값으로 정의됩니다. 구체적으로 `Cache-Control` 헤더의 `max-age` 값이 사용됩니다. `s-maxage` 와 `max-age`가 모두 발견되면 `s-maxage`가 선호됩니다. `max-age`는 CDN과 브라우저를 포함한 모든 다운스트림 클라이언트로도 전달됩니다.
+
+- 업스트림 이미지에 `Cache-Control` 헤더가 포함되지 않거나 값이 매우 낮을 경우 캐시 지속 시간을 늘리기 위해 [`minimumCacheTTL`](#minimumcachettl)을 구성할 수 있습니다.
+- [`deviceSizes`](#devicesizes)와 [`imageSizes`](#devicesizes)를 설정하여 생성할 수 있는 이미지의 총개수를 줄일 수 있습니다.
+- 단일 이미지 포맷을 선호한다면 여러 포맷을 비활성화하도록 [포맷](#formats)을 구성할 수 있습니다.
+
+### `minimumCacheTTL`
+
+캐싱과 최적화된 이미지의 TTL(Time to Live)을 초 단위로 구성할 수 있습니다. 대부분의 경우 파일 내용을 자동으로 해시하고 `Cache-Control` 헤더를 `immutable`(불변)로 설정하여 이미지를 영구적으로 캐시 하는 정적 이미지 가져오기를 사용하는 것이 좋습니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    minimumCacheTTL: 60,
+  },
+}
+```
+
+최적화된 이미지의 만료(또는 Max Age)는 `minimumCacheTTL` 또는 업스트림 이미지 `Cache-Control` 헤더 중 더 큰 값으로 정의됩니다.
+
+이미지 별로 캐싱 동작을 변경해야 하는 경우, 업스트림 이미지(예: `/_next/image` 자체가 아닌 `/some-asset.jpg`)에 [`headers`](/docs/app/api-reference/next-config-js/headers)를 구성하여 `Cache-Control` 헤더를 설정할 수 있습니다.
+
+현재로서는 캐시를 무효화하는 메커니즘이 없으므로 `minimumCacheTTL`을 낮게 유지하는 것이 가장 좋습니다. 그렇지 않으면 [`src`](#src) 프로퍼티를 수동으로 변경하거나 `<distDir>/cache/images`를 삭제해야 할 수 있습니다.
+
+### `disableStaticImages`
+
+기본 동작은 `'./icon.png'에서 아이콘 가져오기`와 같은 정적 파일을 가져온 다음 이를 `src` 프로퍼티로 전달할 수 있습니다.
+
+가져오기가 다르게 작동할 것으로 예상되는 다른 플러그인과 충돌하는 경우 이 기능을 비활성화하는 것이 좋을 수도 있습니다.
+
+`next.config.js` 내에서 정적 이미지 가져오기를 비활성화할 수 있습니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    disableStaticImages: true,
+  },
+}
+```
+
+### `dangerouslyAllowSVG`
+
+기본 [로더](#loader)는 몇 가지 이유로 SVG 이미지를 최적화하지 않습니다. 첫째 SVG는 벡터 형식이므로 손실 없이 크기를 조정할 수 있습니다. 둘째 SVG에는 HTML/CSS와 동일한 기능이 많기 때문에 적절한 [CSP(Content Security Policy) 헤더](/docs/app/api-reference/next-config-js/headers)가 없으면 취약점이 발생할 수 있습니다.
+
+기본 이미지 최적화 API로 SVG 이미지를 제공해야 하는 경우, `next.config.js`내에서 `dangerouslyAllowSVG`를 설정하면 됩니다.
+
+```js filename="next.config.js"
+module.exports = {
+  images: {
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+}
+```
+
+또한 브라우저가 이미지를 강제로 다운로드하도록 하는 `contentDispositionType`과 이미지에 포함된 스크립트가 실행되지 않도록 하는 `contentSecurityPolicy`도 설정할 것을 강력히 권장합니다.
+
+## 애니메이션 이미지
+
+기본 [로더](#loader)는 애니메이션 이미지에 대한 이미지 최적화를 자동으로 우회하여 이미지를 그대로 제공합니다.
+
+애니메이션 파일에 대한 자동 감지는 최선의 노력이며 GIF, APNG 및 WebP를 지원합니다. 특정 애니메이션 이미지에 대한 이미지 최적화를 명시적으로 우회하려면 [unoptimized](#unoptimized) prop을 사용합니다.
+
+## 알려진 브라우저 버그
+
+`next/iamge` 컴포넌트는 [lazy loading](https://caniuse.com/loading-lazy-attr)을 사용하며, Safari 15.4 이전의 구형 브라우저에서는 지연 로딩으로 대체할 수 있습니다. blur-up 플레이스 홀더를 사용할 때 Safari 12 이전의 구형 브라우저에서는 빈 플레이스홀더로 폴백됩니다. `width`/`height`가 `auto`,인 스타일을 사용하는 경우 Safari 15 이전의 구형 브라우저에서 [가로 세로 비율 유지](https://caniuse.com/mdn-html_elements_img_aspect_ratio_computed_from_attributes)가 되지 않는 [Layout Shift](https://web.dev/cls/)가 발생할 수 있습니다. 자세한 내용은 [이 MDN 동영상](https://www.youtube.com/watch?v=4-d_SoCHeWE)을 참조하세요.
+
+- [Safari 15 및 16](https://bugs.webkit.org/show_bug.cgi?id=243601)은 로딩 중에 회색 테투리를 표시합니다. Safari 16.4 [에서 이 문제가 해결되었습니다.](https://webkit.org/blog/13966/webkit-features-in-safari-16-4/#:~:text=Now%20in%20Safari%2016.4%2C%20a%20gray%20line%20no%20longer%20appears%20to%20mark%20the%20space%20where%20a%20lazy%2Dloaded%20image%20will%20appear%20once%20it%E2%80%99s%20been%20loaded.) 해결 가능한 솔루션은 다음과 같습니다.
+  - `@supports (font: -apple-system-body) and (-webkit-appearance: none) { img[loading="lazy"] { clip-path: inset(0.6px) } }` CSS를 사용합니다.
+  - 이미지가 접힌 부분 위에 있는 경우 [`priority`](#priority)를 사용합니다.
+- [Firefox 67+](https://bugzilla.mozilla.org/show_bug.cgi?id=1556156)는 로드하는 동안 흰색 배경을 표시합니다. 해결 가능한 솔루션은 다음과 같습니다.
+  - [AVIF `formats`](#formats)을 활성화합니다.
+  - [`placeholder="blur"`](#placeholder)를 사용합니다.
+
+## Version History
+
+| Version   | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v13.2.0` | `contentDispositionType` 구성이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `v13.0.6` | `ref` prop이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `v13.0.0` | `next/image` 가져오기 이름이 `next/legacy/image`로 변경되었습니다. `next/future/image` 가져오기 이름이 `next/image`로 변경되었습니다. [codemod를 사용](/docs/app/building-your-application/upgrading/codemods#next-image-to-legacy-image)하면 가져오기 이름을 안전하게 자동으로 변경할 수 있습니다. `<span>` 래퍼가 제거되었습니다. `layout`, `objectFit`, `objectPosition`, `lazyBoundary`, `lazyRoot` prop이 제거되었습니다. `alt`는 필수입니다. `onLoadingComplete`는 `img` 요소에 대한 참조를 받습니다. 내장 로더 구성이 제거되었습니다. |
+| `v12.3.0` | `remotePatterns` 및 `unoptimized` 구성이 안정화 되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `v12.2.0` | 실험적인 `remotePatterns` 및 `unoptimized` 구성이 추가되었습니다. `layout="raw"`이 제거되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `v12.1.1` | `style` prop이 추가되었습니다. `layout="raw"`에 대한 실험적 지원이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `v12.1.0` | `dangerouslyAllowSVG` 및 `contentSecurityPolicy` 구성이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `v12.0.9` | `lazyRoot` prop이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `v12.0.0` | `formats` 구성이 추가되었습니다.<br/>AVIF 포맷을 지원합니다.<br/>래퍼 `<div>`가 `<span>`로 변경되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `v11.1.0` | `onLoadingComplete` 및 `lazyBoundary` props가 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `v11.0.0` | 정적 가져오기를 위한 `src` prop을 지원합니다.<br/>`placeholder` prop이 추가되었습니다.<br/>`blurDataURL` prop이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `v10.0.5` | `loader` prop이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `v10.0.1` | `layout` prop이 추가되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `v10.0.0` | `next/image`가 도입되었습니다.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |

@@ -1,0 +1,65 @@
+---
+title: Babel
+description: Next.js에 추가된 Babel 프리셋을 사용자의 고유한 구성으로 확장합니다.
+---
+
+<details>
+  <summary>예시</summary>
+
+- [Babel 구성 커스텀](https://github.com/vercel/next.js/tree/canary/examples/with-custom-babel-config)
+
+</details>
+
+Next.js에는 React 애플리케이션과 서버 측 코드를 컴파일하는 데 필요한 모든 것이 포함된 `next/babel` 프리셋이 포함되어 있습니다. 그러나 기본 Babel 구성을 확장하려는 경우에도 가능합니다.
+
+## 프리셋 및 플러그인 추가
+
+시작하려면 프로젝트의 루트 디렉터리에 `.babelrc` 파일(또는 `babel.config.js`)을 정의하기만 하면 됩니다. 이러한 파일이 발견될 경우 이 파일을 *신뢰 가능한 소스*로 간주합니다. 따라서 `next/babel` 프리셋인 Next.js에 필요한 사항도 정의해야 합니다.
+
+다음은 `.babelrc` 파일 예시입니다:
+
+```json filename=".babelrc"
+{
+  "presets": ["next/babel"],
+  "plugins": []
+}
+```
+
+[이 파일](https://github.com/vercel/next.js/blob/canary/packages/next/src/build/babel/preset.ts)에서 `next/babel`에 포함된 프리셋에 대해 학습할 수 있습니다.
+
+프리셋/플러그인을 **구성하지 않고** 추가하려면 다음 방법을 사용합니다:
+
+```json filename=".babelrc"
+{
+  "presets": ["next/babel"],
+  "plugins": ["@babel/plugin-proposal-do-expressions"]
+}
+```
+
+## 프리셋 및 플러그인 커스텀
+
+**커스텀한 구성으로** 프리셋/플러그인을 추가하기 위해 다음과 같이 `next/babel` 프리셋을 구성합니다:
+
+```json filename=".babelrc"
+{
+  "presets": [
+    [
+      "next/babel",
+      {
+        "preset-env": {},
+        "transform-runtime": {},
+        "styled-jsx": {},
+        "class-properties": {}
+      }
+    ]
+  ],
+  "plugins": []
+}
+```
+
+각 구성에 사용할 수 있는 선택 사항에 대해 자세히 알아보려면 Babel의 [문서](https://babeljs.io/docs/) 사이트를 방문하세요.
+
+> **참고**:
+>
+> - Next.js는 서버 측 컴파일에 **현재** Node.js 버전을 사용합니다.
+> - `"preset-env"`의 `modules` 설정 값은 `false`로 유지되어야 하며, 그렇지 않으면 웹팩 코드 스플리팅이 해제됩니다.

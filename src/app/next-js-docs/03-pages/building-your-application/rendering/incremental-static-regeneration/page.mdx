@@ -1,0 +1,196 @@
+---
+title: 점진적 정적 재생성 (ISR)
+description: 점진적 정적 재생성을 사용하여 런타임에서 정적 페이지를 생성하거나 업데이트하는 방법을 알아보세요.
+---
+
+<details>
+  <summary>예시</summary>
+
+- [Next.js Commerce](https://nextjs.org/commerce)
+- [GitHub Reactions 데모](https://reactions-demo.vercel.app/)
+- [Static Tweet 데모](https://static-tweet.vercel.app/)
+
+</details>
+
+Next.js를 사용하면 사이트를 구축한 후 정적 페이지를 생성하거나 업데이트할 수 있습니다. 점진적 정적 재생성(Incremental Static Regeneration 또는 ISR)을 사용하면 **전체 사이트를 재구축할 필요 없이** 페이지별로 정적 생성을 사용할 수 있습니다. ISR을 사용하면 정적의 이점을 유지하면서 수백만 개의 페이지로 확장할 수 있습니다.
+
+> **참고**: 현재 [`edge` 런타임](/docs/app/api-reference/edge)은 ISR과 호환되지 않지만, `cache-control`헤더를 수동으로 설정하여 `stale-while-revalidate`를 활용할 수 있습니다.
+
+ISR을 사용하려면 `getStaticProps`에 `revalidate` 속성을 추가하세요.
+
+```jsx
+function Blog({ posts }) {
+  return (
+    <ul>
+      {posts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  )
+}
+
+// 이 함수는 서버사이드에서 빌드 시 호출됩니다.
+// 재검증이 활성화되고 새 요청이 들어오면 서버리스 함수에서 다시 호출될 수 있습니다.
+export async function getStaticProps() {
+  const res = await fetch('https://.../posts')
+  const posts = await res.json()
+
+  return {
+    props: {
+      posts,
+    },
+    // Next.js는 페이지 재생성을 시도합니다.
+    // - 요청이 들어올 때
+    // - 최대 10초마다 한 번
+    revalidate: 10, // 단위: 초
+  }
+}
+
+// 이 함수는 서버사이드에서 빌드 시 호출됩니다.
+// 경로가 생성되지 않은 경우에는
+// 서버리스 함수에서 다시 호출될 수 있습니다.
+export async function getStaticPaths() {
+  const res = await fetch('https://.../posts')
+  const posts = await res.json()
+
+  // 게시물을 기반으로 사전 렌더링할 경로를 가져옵니다.
+  const paths = posts.map((post) => ({
+    params: { id: post.id },
+  }))
+
+  // 빌드 시 오직 이 경로만 사전 렌더링할 것입니다.
+  // { fallback: 'blocking' }은 경로가 존재하지 않을 경우에
+  // 요청에 따라 서버에서 페이지를 렌더링합니다.
+  return { paths, fallback: 'blocking' }
+}
+
+export default Blog
+```
+
+빌드 시 사전 렌더링된 페이지에 대한 요청이 발생하면, 초기에는 캐시된 페이지가 표시됩니다.
+
+- 초기 요청 이후 10초 동안 발생하는 페이지에 대한 모든 요청은 캐시되어 즉시 처리됩니다.
+- 10초 이후 다음 요청에는 여전히 캐시된(오래된) 페이지가 표시됩니다.
+- Next.js는 백그라운드에서 페이지를 재생성하는 작업을 시작합니다.
+- 페이지가 성공적으로 생성되면 Next.js는 캐시를 무효화하고 업데이트된 페이지를 표시합니다. 백그라운드 재생성이 실패하면 이전 페이지는 여전히 변경되지 않은 채로 남아 있습니다.
+
+생성되지 않은 경로에 대한 요청이 발생하면, Next.js는 첫 번째 요청에 대해 페이지를 서버에서 렌더링합니다. 이후의 요청은 캐시된 정적 파일을 제공합니다. Vercel의 ISR은 [캐시를 전역적으로 유지하고 롤백을 처리합니다](https://vercel.com/docs/concepts/next.js/incremental-static-regeneration?utm_source=next-site&utm_medium=docs&utm_campaign=next-website).
+
+> **참고**: 업스트림 데이터 공급자가 기본적으로 캐싱을 활성화했는지 확인하세요. 필요에 따라 비활성화해야 할 수도 있습니다(예: `useCdn: false`). 그렇지 않으면 재검증 시 ISR 캐시 업데이트에 필요한 새로운 데이터를 가져올 수 없습니다. 캐싱은 `Cache-Control` 헤더를 반환할 때 CDN(요청 중인 엔드포인트용)에서 발생할 수 있습니다.
+
+## On-Demand 재검증
+
+`revalidate` 시간을 `60`으로 설정하면 모든 방문자에게 1분 동안 동일한 생성 버전의 사이트가 표시됩니다. 캐시를 무효화하는 유일한 방법은 1분이 경과한 후 사용자가 해당 페이지를 방문하는 것입니다.
+
+Next.js는 `v12.2.0`부터 On-Demand Incremental Static Regeneration을 지원하여 특정 페이지에 대한 Next.js 캐시를 수동으로 삭제할 수 있습니다. 이를 통해 다음과 같은 경우 사이트를 더 쉽게 업데이트할 수 있습니다.
+
+- 헤드리스 CMS의 콘텐츠가 생성되거나 업데이트된 경우
+- 전자상거래 메타데이터의 변경 (가격, 설명, 카테고리, 리뷰 등)
+
+`getStaticProps`내부에서는 on-demand 재검증을 사용하기 위해 `revalidate`를 지정할 필요가 없습니다. `revalidate`를 생략하면 Next.js는 기본값으로 `false`(재검증 없음)를 사용하며, `revalidate()`가 호출될 때에만 요청 시 페이지를 재검증합니다.
+
+> **참고**: [미들웨어](/docs/app/building-your-application/routing/middleware)는 On-Demand ISR 요청에 대해 실행되지 않습니다. 대신, 재검증할 정확한 경로에서 `revalidate()`를 호출해야 합니다. 예를 들어 `pages/blog/[slug].js`와 `/post-1`을 `/blog/post-1`로 다시 작성하는 경우 `res.revalidate('/blog/post-1')`을 호출해야 합니다.
+
+### On-Demand 재검증 사용하기
+
+먼저 Next.js 앱에서만 알 수 있는 비밀 토큰을 만듭니다. 이 암호는 재검증 API 경로에 대한 무단 액세스를 방지하는 데 사용됩니다. 다음 URL 구조를 사용하여 경로에 액세스할 수 있습니다.(수동으로 또는 webhook 사용)
+
+```bash filename="Terminal"
+https://<your-site.com>/api/revalidate?secret=<token>
+```
+
+다음으로 애플리케이션에 암호를 [환경 변수](/docs/pages/building-your-application/configuring/environment-variables)로 추가합니다. 마지막으로 재검증 API 경로를 생성합니다.
+
+```js filename="pages/api/revalidate.js"
+export default async function handler(req, res) {
+  // 요청이 유효한지 암호를 확인합니다.
+  if (req.query.secret !== process.env.MY_SECRET_TOKEN) {
+    return res.status(401).json({ message: 'Invalid token' })
+  }
+
+  try {
+    // 재검증해야 할 실제 경로입니다.
+    // 예: "/blog/[slug]"의 경우 "/blog/post-1"이어야 합니다.
+    await res.revalidate('/path-to-revalidate')
+    return res.json({ revalidated: true })
+  } catch (err) {
+    // Next.js는 오류가 발생한 경우
+    // 마지막에 성공적으로 생성된 페이지를 계속 표시합니다.
+    return res.status(500).send('Error revalidating')
+  }
+}
+```
+
+[데모 보기](https://on-demand-isr.vercel.app) on-demand 재검증 작업을 확인하고 피드백을 제공합니다.
+
+### 개발 중 On-Demand ISR 테스트하기
+
+`next dev`를 사용하여 로컬로 실행하는 경우, 모든 요청에 대해 `getStaticProps`가 호출됩니다. on-Demand ISR의 동작이 올바른지 확인하려면 [production build](/docs/pages/api-reference/next-cli#build)를 생성 하고 [production server](/docs/pages/api-reference/next-cli#production)를 시작해야 합니다.
+
+```bash filename="Terminal"
+$ next build
+$ next start
+```
+
+그러면 정적 페이지가 성공적으로 재검증되었음을 확인할 수 있습니다.
+
+## 오류 처리 및 재검증
+
+백그라운드 재생성 중에 `getStaticProps` 내부에서 오류가 발생하거나 수동으로 오류를 발생시키면 마지막에 성공적으로 생성된 페이지가 계속해서 표시됩니다. 다음 요청에서 Next.js는 `getStaticProps`를 다시 호출하려고 시도합니다.
+
+```jsx
+export async function getStaticProps() {
+  // 만약 이 요청이 예외 에러를 발생시킨다면
+  // Next.js는 현재 표시된 페이지를 무효화하지 않고,
+  // 다음 요청에서 getStaticProps를 재시도합니다.
+  const res = await fetch('https://.../posts')
+  const posts = await res.json()
+
+  if (!res.ok) {
+    // 서버 에러가 발생하는 경우, 캐시가 업데이트되지 않도록 반환하는 대신
+    // 다음에 성공적인 요청이 있을 때까지 에러를 발생시키도록 설정할 수 있습니다.
+    throw new Error(`Failed to fetch posts, received status ${res.status}`)
+  }
+
+  // 요청이 성공한 경우, 게시글을 반환하고
+  // 10초마다 재검증합니다.
+  return {
+    props: {
+      posts,
+    },
+    revalidate: 10,
+  }
+}
+```
+
+## 자체 호스팅 ISR
+
+[자체 호스팅된 Next.js 사이트](/docs/pages/building-your-application/deploying#self-hosting)에서는 점진적 정적 재생성 (ISR)을 사용할 수 있습니다. 이는 `next start`를 사용할 때 기본적으로 작동합니다.
+
+이 접근 방식은 [Kubernetes](https://kubernetes.io/)나 [HashiCorp Nomad](https://www.nomadproject.io/)와 같은 컨테이너 오케스트레이터에 배포할 때 사용할 수 있습니다. 또는 기본적으로 생성된 에셋은 각 pod 메모리에 저장됩니다. 이는 각 pod에 고유한 정적 파일 사본이 있음을 의미합니다. 특정 pod이 요청을 받을 때까지 오래된 데이터가 표시될 수 있습니다.
+
+모든 pods간에 일관성을 유지하기 위해 메모리 내 캐싱을 비활성화할 수 있습니다. 이렇게 하면 Next.js 서버는 파일 시스템에서 ISR에 의해 생성된 에셋만 사용하도록 지정됩니다.
+
+Kubernetes pods(또는 유사한 설정)에서 공유 네트워크 마운트를 사용하여 서로 다른 컨테이너 간에 동일한 파일 시스템 캐시를 재사용할 수 있습니다. 동일한 마운트를 공유하면 `next/image`캐시가 포함된 `.next`폴더도 공유되고 재사용됩니다.
+
+메모리 내 캐싱을 비활성화하려면 `next.config.js`파일에서 `isrMemoryCacheSize`를 `0`으로 설정하세요.
+
+```js filename="next.config.js"
+module.exports = {
+  experimental: {
+    // 기본값은 50MB입니다.
+    isrMemoryCacheSize: 0,
+  },
+}
+```
+
+> **참고**: 공유 마운트가 구성된 방식에 따라 동시에 캐시를 업데이트하려고 시도하는 여러 pods간의 경쟁 조건을 고려해야 할 수 있습니다.
+
+## 버전 기록
+
+| 버전      | 변경 사항                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------- |
+| `v12.2.0` | On-Demand ISR은 안정적입니다.                                                                      |
+| `v12.1.0` | On-Demand ISR이 추가되었습니다(베타).                                                              |
+| `v12.0.0` | [Bot-aware ISR fallback](https://nextjs.org/blog/next-12#bot-aware-isr-fallback)이 추가되었습니다. |
+| `v9.5.0`  | Base Path가 추가되었습니다.                                                                        |
