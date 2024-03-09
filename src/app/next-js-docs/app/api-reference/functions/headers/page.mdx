@@ -1,0 +1,91 @@
+---
+title: headers
+description: headers function에 대한 API 레퍼런스입니다.
+---
+
+`headers` 함수는 [Server 컴포넌트](/docs/getting-started/react-essentials)에서 HTTP 수신 요청 헤더를 읽을 수 있는 기능을 제공합니다.
+
+## `headers()`
+
+이 API는 [Web Headers API](https://developer.mozilla.org/en-US/docs/Web/API/Headers)에서 확장된 것입니다. 읽기 전용이며, 요청을 보낼 때 헤더를 설정/삭제할 수 없습니다.
+
+```tsx filename="app/page.tsx" switcher
+import { headers } from 'next/headers'
+
+export default function Page() {
+  const headersList = headers()
+  const referer = headersList.get('referer')
+
+  return <div>Referer: {referer}</div>
+}
+```
+
+```jsx filename="app/page.js" switcher
+import { headers } from 'next/headers'
+
+export default function Page() {
+  const headersList = headers()
+  const referer = headersList.get('referer')
+
+  return <div>Referer: {referer}</div>
+}
+```
+
+> **참고**:
+>
+> - `headers()`는 **[Dynamic Function](/docs/app/building-your-application/rendering/static-and-dynamic-rendering#dynamic-functions)** 으로, 반환되는 값은 미리 알 수 없습니다. 레이아웃이나 페이지에서 이를 사용하면 요청 시간에 **[동적으로 렌더링](/docs/app/building-your-application/rendering/static-and-dynamic-rendering#dynamic-rendering)** 됩니다.
+
+### API 레퍼런스
+
+```tsx
+const headersList = headers()
+```
+
+#### 파라미터
+
+`headers`는 어떤 파라미터도 받지 않습니다.
+
+#### 반환값
+
+`headers`는 읽기 전용인 [Web Headers](https://developer.mozilla.org/en-US/docs/Web/API/Headers) 객체를 반환합니다.
+
+- [`Headers.entries()`](https://developer.mozilla.org/en-US/docs/Web/API/Headers/entries): 모든 키/값 쌍을 순회하여 확인할 수 있는 [`이터레이터`](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Iteration_protocols)를 반환합니다.
+- [`Headers.forEach()`](https://developer.mozilla.org/en-US/docs/Web/API/Headers/forEach): `Headers` 객체의 키/값 쌍에 대해 제공된 함수를 한 번씩 실행합니다.
+- [`Headers.get()`](https://developer.mozilla.org/en-US/docs/Web/API/Headers/get): 주어진 이름과 일치하는 `Headers` 객체 내 헤더의 모든 값을 [`문자열`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) 시퀀스로 반환합니다.
+
+- [`Headers.has()`](https://developer.mozilla.org/en-US/docs/Web/API/Headers/has): `Headers` 객체가 특정 헤더를 포함하고 있는지를 나타내는 boolean 값을 반환합니다.
+- [`Headers.keys()`](https://developer.mozilla.org/en-US/docs/Web/API/Headers/keys): `Headers` 객체에 포함된 key/value 쌍의 key를 순회하여 확인할 수 있는 [`이터레이터`](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Iteration_protocols)를 반환합니다.
+- [`Headers.values()`](https://developer.mozilla.org/en-US/docs/Web/API/Headers/values): `Headers` 객체에 포함된 key/value 쌍의 value를 순회하여 확인할 수 있는 [`이터레이터`](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Iteration_protocols)를 반환합니다.
+
+### 예시
+
+#### Data fetching과 사용하기
+
+`headers()` can be used in combination with [Suspense for Data Fetching](/docs/app/building-your-application/data-fetching/fetching).
+
+`headers()`는 [Data Fetching에 대한 Suspense](/docs/app/building-your-application/data-fetching/fetching)와 결합하여 사용할 수 있습니다.
+
+```jsx filename="app/page.js"
+import { headers } from 'next/headers'
+
+async function getUser() {
+  const headersInstance = headers()
+  const authorization = headersInstance.get('authorization')
+  // authorization 헤더를 전달하세요.
+  const res = await fetch('...', {
+    headers: { authorization },
+  })
+  return res.json()
+}
+
+export default async function UserPage() {
+  const user = await getUser()
+  return <h1>{user.name}</h1>
+}
+```
+
+## Version History
+
+| Version   | Changes         |
+| --------- | --------------- |
+| `v13.0.0` | `headers` 안내. |

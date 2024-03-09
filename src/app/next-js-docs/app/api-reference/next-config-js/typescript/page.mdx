@@ -1,0 +1,23 @@
+---
+title: 타입스크립트
+description: Next.js에서 타입스크립트 오류를 제외하는 방법을 배웁니다.
+---
+
+Next.js는 타입스크립트 에러가 발생하면 빌드에 실패합니다.
+
+에러가 있더라도 Next.js를 빌드하기 원한다면, 타입 검사 단계를 비활성화할 수 있습니다.
+
+비활성화된 경우, 빌드 또는 배포 과정의 일부로 타입 검사를 실행하고 있는지 확인하십시오. 그렇지 않으면 매우 위험할 수 있습니다.
+
+'next.config.js'를 열고 'typescript' 에서 'ignoreBuildErrors' 옵션을 활성화합니다.
+
+```js filename="next.config.js"
+module.exports = {
+  typescript: {
+    // !! 주의 !!
+    // 타입 에러가 있더라도 프로젝트 빌드가 완료될 수 있습니다.
+    // !! 주의 !!
+    ignoreBuildErrors: true,
+  },
+}
+```
